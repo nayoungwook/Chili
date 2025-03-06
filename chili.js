@@ -1,7 +1,4 @@
 
-const CONTENT
-    = "<title> This is <bold> Title! </bold></title>\n";
-
 class Token {
     constructor(type, text) {
         this.type = type;
@@ -18,7 +15,7 @@ function tokenize(content) {
     for (; i < content.length; i++) {
         let c = content[i];
 
-        if (c == '<') {
+        if (c == '[') {
             if (token != "") {
                 result.push(new Token('text', token));
                 token = "";
@@ -26,7 +23,7 @@ function tokenize(content) {
             isEndTag = content[i + 1] == '/';
         }
 
-        if (c == '>') {
+        if (c == ']') {
             token += c;
             if (isEndTag)
                 result.push(new Token('endTag', token));
@@ -38,6 +35,9 @@ function tokenize(content) {
 
         token += c;
     }
+
+    if (token != '')
+        result.push(new Token('text', token));
 
     return result;
 }
@@ -82,6 +82,43 @@ function parse(tokens) {
     return result;
 }
 
-let result = parse(tokenize(CONTENT));
+function generateBlog(tags) {
+    let result = '';
+    let container = document.body.querySelector('#container');
 
-console.log(result);
+    for (let i = 0; i < tags.length; i++) {
+        let tag = tags[i];
+
+        if (tag.type == "[title]") {
+            container.querySelector('#title').innerHTML = generateBlog(tag.contents);
+        }
+
+        if (tag.type == "[bold]") {
+            result += '<b style="font-weight:1000;"> ' + generateBlog(tag.contents) + ' </b>';
+        }
+
+        if (tag.type == "[date]") {
+            container.querySelector('#date').innerHTML = `<em>작성일: ${generateBlog(tag.contents)}</em>`;
+        }
+
+        if (tag.type == "text") {
+            result += tag.contents.text;
+        }
+    }
+
+    return result;
+}
+
+function applyBlog(CONTENT) {
+    let tokens = tokenize(CONTENT);
+    let result = parse(tokens);
+
+    let container = document.body.querySelector('#container');
+    let blog = generateBlog(result);
+    container.innerHTML += blog;
+}
+
+const CONTENT
+    = "[title] This is [bold] Title! [/bold][/title]\n [date] 2025-03-06 [/date] and this is content";
+
+applyBlog(CONTENT);
